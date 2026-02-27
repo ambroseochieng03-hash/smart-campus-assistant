@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+<div class="container">
+
+    <div class="top-bar">
+        <h1>Dashboard</h1>
+        <div>
+            <button onclick="toggleDarkMode()">🌙</button>
+            <a href="/logout"><button>Logout</button></a>
+        </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats">
+        <div class="stat-card">Total: {{ total }}</div>
+        <div class="stat-card">Upcoming: {{ upcoming }}</div>
+        <div class="stat-card overdue-stat">Overdue: {{ overdue }}</div>
+    </div>
+
+    <!-- Add Assignment -->
+    <div class="card">
+        <h2>Add Assignment</h2>
+        <form method="POST">
+            <input type="text" name="title" placeholder="Assignment Title" required>
+            <input type="date" name="due_date" required>
+            <button type="submit">Add</button>
+        </form>
+    </div>
+
+    <!-- Assignment List -->
+    <div class="card">
+        <h2>Your Assignments</h2>
+        {% for assignment in assignments %}
+            {% set due = assignment.due_date %}
+            {% if due < today|string %}
+                <div class="assignment overdue">
+            {% else %}
+                <div class="assignment">
+            {% endif %}
+                    <div>
+                        <strong>{{ assignment.title }}</strong>
+                        <br>
+                        <small>Due: {{ assignment.due_date }}</small>
+                    </div>
+                    <a href="/delete/{{ assignment.id }}">
+                        <button class="delete-btn">Delete</button>
+                    </a>
+                </div>
+        {% else %}
+            <p>No assignments yet.</p>
+        {% endfor %}
+    </div>
+
+    <!-- Chart -->
+    <div class="card">
+        <h2>Assignments This Week</h2>
+        <canvas id="weekChart"></canvas>
+    </div>
+
+    <!-- Add Timetable -->
+    <div class="card">
+        <h2>Add Class / Timetable</h2>
+        <form method="POST" action="/add_course">
+            <input type="text" name="name" placeholder="Course Name" required>
+            <select name="day" required>
+                <option>Monday</option>
+                <option>Tuesday</option>
+                <option>Wednesday</option>
+                <option>Thursday</option>
+                <option>Friday</option>
+            </select>
+            <input type="time" name="start_time" required>
+            <input type="time" name="end_time" required>
+            <button type="submit">Add Class</button>
+        </form>
+    </div>
+
+    <!-- Timetable Display -->
+    <div class="card">
+        <h2>Your Timetable</h2>
+        <ul>
+            {% for course in courses %}
+                <li>{{ course.day }} - {{ course.name }} ({{ course.start_time }} - {{ course.end_time }})</li>
+            {% else %}
+                <p>No classes yet.</p>
+            {% endfor %}
+        </ul>
+    </div>
+
+</div>
+
+<script>
+function toggleDarkMode() {
+    document.body.classList.toggle("dark");
+}
+
+// Chart.js
+const ctx = document.getElementById('weekChart').getContext('2d');
+const weekChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+        labels: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
+        datasets: [{
+            label: 'Assignments Due',
+            data: {{ week_counts }},
+            backgroundColor: '#3498db'
+        }]
+    },
+    options: {
+        responsive: true,
+        scales: {
+            y: { beginAtZero: true }
+        }
+    }
+});
+</script>
+
+</body>
+</html>
