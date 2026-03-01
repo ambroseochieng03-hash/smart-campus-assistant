@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for, session
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 from flask_mail import Mail, Message
-import threading
+#import threading
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///campus.db'
@@ -118,8 +118,16 @@ def dashboard():
         db.session.commit()
 
         # ---- Send instant reminders asynchronously ----
-        students = Student.query.all()
-        threading.Thread(target=send_reminders_async, args=(title, students)).start()
+        #students = Student.query.all()
+        #threading.Thread(target=send_reminders_async, args=(title, students)).start()
+        # Get all student emails
+        students = Student.query.with_entities(Student.email).all()
+        emails = [s[0] for s in students]
+
+        # Send emails synchronously (SAFE FOR PRODUCTION)
+        for email in emails:
+            send_reminder(title, email)
+        #threading.Thread(target=send_reminders_async, args=(title, emails)).start()
 
         return redirect(url_for('dashboard'))
 
@@ -194,13 +202,14 @@ def check_assignments_and_send_reminders():
 # ---------------- CLOUD CRON JOB ENDPOINT ---------------- #
 @app.route('/send_reminders')
 def send_reminders_endpoint():
-    threading.Thread(target=check_assignments_and_send_reminders).start()
+    #threading.Thread(target=check_assignments_and_send_reminders).start()
     return "Reminders checked asynchronously!"
+
 # ---- Send instant reminders asynchronously ----
-def send_reminders_async(title, students):
-    with app.app_context():  # <--- ensure Flask app context is active
-        for student in students:
-            send_reminder(title, student.email)
+#def send_reminders_async(title, students):
+    #with app.app_context():  # <--- ensure Flask app context is active
+        #for student in students:
+            #send_reminder(title, student.email)          
 
 # ---------------- RUN APP ---------------- #
 #if __name__ == '__main__':
