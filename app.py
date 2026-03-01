@@ -208,6 +208,22 @@ def send_reminders_endpoint():
     #threading.Thread(target=check_assignments_and_send_reminders).start()
     return "Reminders checked asynchronously!"
 
+@app.route('/reset_db')
+def reset_db():
+    # WARNING: This deletes everything!
+    with app.app_context():
+        db.drop_all()
+        db.create_all()
+    return "Database reset!"
+
+@app.route('/clear_assignments')
+def clear_assignments():
+    """Deletes all assignments only."""
+    with app.app_context():
+        Assignment.query.delete()
+        db.session.commit()
+    return "✅ All assignments deleted!"
+
 # ---- Send instant reminders asynchronously ----
 #def send_reminders_async(title, students):
     #with app.app_context():  # <--- ensure Flask app context is active
