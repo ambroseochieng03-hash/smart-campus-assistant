@@ -37,25 +37,26 @@
     <!-- Assignment List -->
     <div class="card">
         <h2>Your Assignments</h2>
-        {% for assignment in assignments %}
-            {% set due = assignment.due_date %}
-            {% if due < today|string %}
-                <div class="assignment overdue">
-            {% else %}
-                <div class="assignment">
-            {% endif %}
+        {% if assignments %}
+            {% for assignment in assignments %}
+                {% if assignment.due_date < today %}
+                    <div class="assignment overdue">
+                {% else %}
+                    <div class="assignment">
+                {% endif %}
                     <div>
                         <strong>{{ assignment.title }}</strong>
                         <br>
-                        <small>Due: {{ assignment.due_date }}</small>
+                        <small>Due: {{ assignment.due_date.strftime('%Y-%m-%d') }}</small>
                     </div>
                     <a href="/delete/{{ assignment.id }}">
                         <button class="delete-btn">Delete</button>
                     </a>
                 </div>
+            {% endfor %}
         {% else %}
             <p>No assignments yet.</p>
-        {% endfor %}
+        {% endif %}
     </div>
 
     <!-- Chart -->
