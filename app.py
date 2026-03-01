@@ -203,9 +203,14 @@ def send_reminders_async(title, students):
             send_reminder(title, student.email)
 
 # ---------------- RUN APP ---------------- #
+#if __name__ == '__main__':
+   # with app.app_context():
+        #db.create_all()  # Never drop DB, preserves registered users
+
+    #port = 5000
+    #app.run(host="0.0.0.0", port=port, debug=False)
+
 if __name__ == '__main__':
     with app.app_context():
-        db.create_all()  # Never drop DB, preserves registered users
-
-    port = 5000
-    app.run(host="0.0.0.0", port=port, debug=False)
+        db.create_all()
+    app.run(debug=True)
