@@ -202,6 +202,7 @@ def check_assignments_and_send_reminders():
 # ---------------- RUN APP ---------------- #
 if __name__ == '__main__':
     with app.app_context():
+        db.drop_all()
         db.create_all()  # ensure DB exists
 
     port = 5000
