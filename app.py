@@ -99,10 +99,16 @@ def dashboard():
         db.session.commit()
 
         # ---- Send instant reminder to all students ----
+        import threading
+
+# ---- Send instant reminder asynchronously ----
+        def send_reminders_async(title, students):
+            for student in students:
+                send_reminder(title, student.email)
+                print(f"Instant reminder sent to {student.email} for {title}")
+
         students = Student.query.all()
-        for student in students:
-            send_reminder(title, student.email)
-            print(f"Instant reminder sent to {student.email} for {title}")
+        threading.Thread(target=send_reminders_async, args=(title, students)).start()
 
         return redirect(url_for('dashboard'))
 
