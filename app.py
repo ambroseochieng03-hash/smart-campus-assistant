@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for, session
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 from flask_mail import Mail, Message
+import threading
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///campus.db'
@@ -40,6 +41,25 @@ class Course(db.Model):
     start_time = db.Column(db.String(5), nullable=False)
     end_time = db.Column(db.String(5), nullable=False)
 
+# ---------------- EMAIL FUNCTION ---------------- #
+def send_reminder(assignment_title, to_email):
+    try:
+        msg = Message(
+            'Assignment Reminder',
+            sender=app.config['MAIL_USERNAME'],
+            recipients=[to_email]
+        )
+        msg.body = f'Reminder: Your assignment "{assignment_title}" is due soon!'
+        mail.send(msg)
+        print(f"[SUCCESS] Reminder sent to {to_email} for {assignment_title}")
+    except Exception as e:
+        print(f"[ERROR] Failed to send reminder to {to_email}: {e}")
+
+def send_reminders_async(title, students):
+    """Send instant reminders in a separate thread to prevent blocking"""
+    for student in students:
+        send_reminder(title, student.email)
+
 # ---------------- ROUTES ---------------- #
 @app.route('/')
 def index():
@@ -64,7 +84,6 @@ def register():
     existing_user = Student.query.filter(
         (Student.username == username) | (Student.email == email)
     ).first()
-
     if existing_user:
         return "Error: Username or Email already exists. Try another."
 
@@ -98,15 +117,7 @@ def dashboard():
         db.session.add(new_assignment)
         db.session.commit()
 
-        # ---- Send instant reminder to all students ----
-        import threading
-
-# ---- Send instant reminder asynchronously ----
-        def send_reminders_async(title, students):
-            for student in students:
-                send_reminder(title, student.email)
-                print(f"Instant reminder sent to {student.email} for {title}")
-
+        # ---- Send instant reminders asynchronously ----
         students = Student.query.all()
         threading.Thread(target=send_reminders_async, args=(title, students)).start()
 
@@ -156,28 +167,9 @@ def add_course():
     db.session.commit()
     return redirect(url_for('dashboard'))
 
-# ---------------- CLOUD CRON JOB ENDPOINT ---------------- #
-@app.route('/send_reminders')
-def send_reminders():
-    check_assignments_and_send_reminders()
-    return "Reminders checked!"
-
-# ---------------- EMAIL FUNCTION ---------------- #
-def send_reminder(assignment_title, to_email):
-    try:
-        msg = Message(
-            'Assignment Reminder',
-            sender='smartcampusassistants@gmail.com',
-            recipients=[to_email]
-        )
-        msg.body = f'Reminder: Your assignment "{assignment_title}" is due soon!'
-        mail.send(msg)
-        print(f"Reminder sent to {to_email} for {assignment_title}")
-    except Exception as e:
-        print(f"Failed to send reminder: {e}")
-
-# ---------------- SMART SCHEDULER ---------------- #
+# ---------------- RECURRING REMINDERS ---------------- #
 def check_assignments_and_send_reminders():
+    """Send reminders for assignments if 6 hours passed since last reminder"""
     with app.app_context():
         now = datetime.now()
         assignments = Assignment.query.all()
@@ -199,11 +191,21 @@ def check_assignments_and_send_reminders():
                 a.last_reminder_sent = now
                 db.session.commit()
 
+# ---------------- CLOUD CRON JOB ENDPOINT ---------------- #
+@app.route('/send_reminders')
+def send_reminders_endpoint():
+    threading.Thread(target=check_assignments_and_send_reminders).start()
+    return "Reminders checked asynchronously!"
+# ---- Send instant reminders asynchronously ----
+def send_reminders_async(title, students):
+    with app.app_context():  # <--- ensure Flask app context is active
+        for student in students:
+            send_reminder(title, student.email)
+
 # ---------------- RUN APP ---------------- #
 if __name__ == '__main__':
     with app.app_context():
-        db.drop_all()
-        db.create_all()  # ensure DB exists
+        db.create_all()  # Never drop DB, preserves registered users
 
     port = 5000
     app.run(host="0.0.0.0", port=port, debug=False)
