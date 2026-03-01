@@ -42,18 +42,6 @@ class Course(db.Model):
     end_time = db.Column(db.String(5), nullable=False)
 
 # ---------------- EMAIL FUNCTION ---------------- #
-def send_reminder(assignment_title, to_email):
-    try:
-        msg = Message(
-            'Assignment Reminder',
-            sender=app.config['MAIL_USERNAME'],
-            recipients=[to_email]
-        )
-        msg.body = f'Reminder: Your assignment "{assignment_title}" is due soon!'
-        mail.send(msg)
-        print(f"[SUCCESS] Reminder sent to {to_email} for {assignment_title}")
-    except Exception as e:
-        print(f"[ERROR] Failed to send reminder to {to_email}: {e}")
 
 def send_reminders_async(title, students):
     """Send instant reminders in a separate thread to prevent blocking"""
@@ -198,6 +186,21 @@ def check_assignments_and_send_reminders():
                     send_reminder(a.title, student.email)
                 a.last_reminder_sent = now
                 db.session.commit()
+import logging
+logging.basicConfig(level=logging.INFO)
+
+def send_reminder(assignment_title, to_email):
+    try:
+        msg = Message(
+            'Assignment Reminder',
+            sender=app.config['MAIL_USERNAME'],
+            recipients=[to_email]
+        )
+        msg.body = f'Reminder: Your assignment "{assignment_title}" is due soon!'
+        mail.send(msg)
+        logging.info(f"[SUCCESS] Reminder sent to {to_email} for {assignment_title}")
+    except Exception as e:
+        logging.error(f"[ERROR] Failed to send reminder to {to_email}: {e}")               
 
 # ---------------- CLOUD CRON JOB ENDPOINT ---------------- #
 @app.route('/send_reminders')
