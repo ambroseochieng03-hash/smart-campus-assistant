@@ -103,10 +103,10 @@ def dashboard():
     if 'user' not in session:
         return redirect(url_for('index'))
 
+    # ---- Dashboard POST route ----
     if request.method == 'POST':
         title = request.form['title']
         due_date_str = request.form['due_date']
-
         due_date = datetime.strptime(due_date_str, "%Y-%m-%d")
 
         new_assignment = Assignment(
@@ -117,9 +117,11 @@ def dashboard():
         db.session.add(new_assignment)
         db.session.commit()
 
-        # ---- Send instant reminders asynchronously ----
+        # Send instant reminder safely
         students = Student.query.all()
-        threading.Thread(target=send_reminders_async, args=(title, students)).start()
+        for student in students:
+            with app.app_context():
+                send_reminder(title, student.email)
 
         return redirect(url_for('dashboard'))
 
