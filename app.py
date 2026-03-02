@@ -25,6 +25,8 @@ logging.basicConfig(level=logging.INFO)
 
 # ---------------- DATABASE ---------------- #
 db = SQLAlchemy(app)
+with app.app_context():
+    db.create_all()
 
 class Student(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -130,8 +132,8 @@ def dashboard():
         # Send instant reminders synchronously
         students = Student.query.with_entities(Student.email).all()
         emails = [s[0] for s in students]
-        for email in emails:
-            send_reminder(title, email)
+        #for email in emails:
+            #send_reminder(title, email)
 
         return redirect(url_for('dashboard'))
 
