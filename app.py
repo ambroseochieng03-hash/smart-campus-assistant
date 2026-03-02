@@ -1,27 +1,25 @@
 from flask import Flask, render_template, request, redirect, url_for, session
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
+import os
 
-# ---------------- SETUP ---------------- #
+# ---------------- APP SETUP ---------------- #
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///campus.db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = 'supersecretkey'
 
-db = SQLAlchemy(app)
+# SQLite database
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///campus.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# Create tables automatically in production
-with app.app_context():
-    db.drop_all()
-    db.create_all()
+db = SQLAlchemy(app)
 
 # ---------------- DATABASE MODELS ---------------- #
 
 class Student(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(100), nullable=False)   # removed unique=True
+    username = db.Column(db.String(100), nullable=False)
     password = db.Column(db.String(100), nullable=False)
-    email = db.Column(db.String(100), nullable=False)      # removed unique=True
+    email = db.Column(db.String(120), nullable=False)
 
 
 class Assignment(db.Model):
@@ -34,8 +32,14 @@ class Course(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     day = db.Column(db.String(20), nullable=False)
-    start_time = db.Column(db.String(5), nullable=False)
-    end_time = db.Column(db.String(5), nullable=False)
+    start_time = db.Column(db.String(10), nullable=False)
+    end_time = db.Column(db.String(10), nullable=False)
+
+# ---------------- CREATE TABLES (PRODUCTION SAFE) ---------------- #
+
+with app.app_context():
+    db.drop_all()
+    db.create_all()
 
 # ---------------- ROUTES ---------------- #
 
@@ -94,11 +98,11 @@ def dashboard():
 
         return redirect(url_for('dashboard'))
 
-    assignments = Assignment.query.all()
+    assignments = Assignment.query.order_by(Assignment.due_date).all()
     courses = Course.query.all()
 
-    total = len(assignments)
     today = datetime.today()
+    total = len(assignments)
     overdue = sum(1 for a in assignments if a.due_date < today)
     upcoming = total - overdue
 
@@ -137,6 +141,8 @@ def add_course():
 
     return redirect(url_for('dashboard'))
 
-# ---------------- RUN LOCAL ONLY ---------------- #
+
+# ---------------- LOCAL RUN ---------------- #
+
 if __name__ == '__main__':
     app.run(debug=True)
