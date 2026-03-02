@@ -12,6 +12,7 @@ db = SQLAlchemy(app)
 
 # Create tables automatically in production
 with app.app_context():
+    db.drop_all()
     db.create_all()
 
 # ---------------- DATABASE MODELS ---------------- #
