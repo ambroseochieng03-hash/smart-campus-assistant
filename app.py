@@ -1,8 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, session
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
-from flask_mail import Mail, Message
-import logging
 
 # ---------------- SETUP ---------------- #
 app = Flask(__name__)
@@ -10,35 +8,26 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///campus.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = 'supersecretkey'
 
-# ---------------- MAIL CONFIG ---------------- #
-app.config.update(
-    MAIL_SERVER='smtp.gmail.com',
-    MAIL_PORT=587,
-    MAIL_USE_TLS=True,
-    MAIL_USERNAME='smartcampusassistants@gmail.com',
-    MAIL_PASSWORD='zzkbjxbnnnmjfdzr'
-)
-mail = Mail(app)
-
-# ---------------- LOGGING ---------------- #
-logging.basicConfig(level=logging.INFO)
-
-# ---------------- DATABASE ---------------- #
 db = SQLAlchemy(app)
+
+# Create tables automatically in production
 with app.app_context():
     db.create_all()
 
+# ---------------- DATABASE MODELS ---------------- #
+
 class Student(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(100), unique=True, nullable=False)
+    username = db.Column(db.String(100), nullable=False)   # removed unique=True
     password = db.Column(db.String(100), nullable=False)
-    email = db.Column(db.String(100), unique=True, nullable=False)
+    email = db.Column(db.String(100), nullable=False)      # removed unique=True
+
 
 class Assignment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200), nullable=False)
     due_date = db.Column(db.DateTime, nullable=False)
-    last_reminder_sent = db.Column(db.DateTime, nullable=True)
+
 
 class Course(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -47,41 +36,12 @@ class Course(db.Model):
     start_time = db.Column(db.String(5), nullable=False)
     end_time = db.Column(db.String(5), nullable=False)
 
-# ---------------- EMAIL FUNCTION ---------------- #
-import smtplib
-
-def send_reminder(assignment_title, to_email):
-    try:
-        msg = Message(
-            'Assignment Reminder',
-            sender=app.config['MAIL_USERNAME'],
-            recipients=[to_email]
-        )
-        msg.body = f'Reminder: Your assignment "{assignment_title}" is due soon!'
-
-        mail.send(msg)
-        logging.info(f"[SUCCESS] Reminder sent to {to_email}")
-
-    except smtplib.SMTPException as e:
-        logging.error(f"[SMTP ERROR] {e}")
-
-    except Exception as e:
-        logging.error(f"[GENERAL ERROR] {e}")
-
 # ---------------- ROUTES ---------------- #
+
 @app.route('/')
 def index():
     return render_template('index.html')
 
-@app.route('/login', methods=['POST'])
-def login():
-    username = request.form['username']
-    password = request.form['password']
-    user = Student.query.filter_by(username=username, password=password).first()
-    if user:
-        session['user'] = username
-        return redirect(url_for('dashboard'))
-    return "Invalid Credentials"
 
 @app.route('/register', methods=['POST'])
 def register():
@@ -89,26 +49,33 @@ def register():
     password = request.form['password']
     email = request.form['email']
 
-    existing_user = Student.query.filter(
-        (Student.username == username) | (Student.email == email)
-    ).first()
-    if existing_user:
-        return "Error: Username or Email already exists. Try another."
-
     new_user = Student(username=username, password=password, email=email)
     db.session.add(new_user)
     db.session.commit()
+
     session['user'] = username
-
-    # Send instant email reminders for new assignment
-    # (currently no assignments yet, handled separately)
-
     return redirect(url_for('dashboard'))
+
+
+@app.route('/login', methods=['POST'])
+def login():
+    username = request.form['username']
+    password = request.form['password']
+
+    user = Student.query.filter_by(username=username, password=password).first()
+
+    if user:
+        session['user'] = username
+        return redirect(url_for('dashboard'))
+
+    return "Invalid Credentials"
+
 
 @app.route('/logout')
 def logout():
     session.pop('user', None)
     return redirect(url_for('index'))
+
 
 @app.route('/dashboard', methods=['GET', 'POST'])
 def dashboard():
@@ -118,22 +85,11 @@ def dashboard():
     if request.method == 'POST':
         title = request.form['title']
         due_date_str = request.form['due_date']
-
         due_date = datetime.strptime(due_date_str, "%Y-%m-%d")
 
-        new_assignment = Assignment(
-            title=title,
-            due_date=due_date,
-            last_reminder_sent=datetime.now()  # mark as sent immediately
-        )
+        new_assignment = Assignment(title=title, due_date=due_date)
         db.session.add(new_assignment)
         db.session.commit()
-
-        # Send instant reminders synchronously
-        students = Student.query.with_entities(Student.email).all()
-        emails = [s[0] for s in students]
-        #for email in emails:
-            #send_reminder(title, email)
 
         return redirect(url_for('dashboard'))
 
@@ -144,10 +100,6 @@ def dashboard():
     today = datetime.today()
     overdue = sum(1 for a in assignments if a.due_date < today)
     upcoming = total - overdue
-    week_counts = [0]*7
-    for a in assignments:
-        weekday = a.due_date.weekday()
-        week_counts[weekday] += 1
 
     return render_template(
         'dashboard.html',
@@ -156,9 +108,9 @@ def dashboard():
         total=total,
         overdue=overdue,
         upcoming=upcoming,
-        today=today,
-        week_counts=week_counts
+        today=today
     )
+
 
 @app.route('/delete/<int:id>')
 def delete(id):
@@ -166,6 +118,7 @@ def delete(id):
     db.session.delete(assignment)
     db.session.commit()
     return redirect(url_for('dashboard'))
+
 
 @app.route('/add_course', methods=['POST'])
 def add_course():
@@ -180,27 +133,9 @@ def add_course():
     course = Course(name=name, day=day, start_time=start_time, end_time=end_time)
     db.session.add(course)
     db.session.commit()
+
     return redirect(url_for('dashboard'))
 
-# ---------------- MANUAL REMINDERS ENDPOINT ---------------- #
-@app.route('/send_reminders')
-def send_reminders_endpoint():
-    """Manual endpoint to send reminders to all students for all upcoming assignments"""
-    now = datetime.now()
-    assignments = Assignment.query.all()
-    students = Student.query.all()
-
-    for a in assignments:
-        if a.due_date > now:
-            for student in students:
-                send_reminder(a.title, student.email)
-            a.last_reminder_sent = now
-            db.session.commit()
-
-    return "Reminders sent successfully!"
-
-# ---------------- RUN APP ---------------- #
+# ---------------- RUN LOCAL ONLY ---------------- #
 if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()
     app.run(debug=True)
