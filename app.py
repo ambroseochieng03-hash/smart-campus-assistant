@@ -92,11 +92,37 @@ def dashboard():
         due_date_str = request.form['due_date']
         due_date = datetime.strptime(due_date_str, "%Y-%m-%d")
 
-        new_assignment = Assignment(title=title, due_date=due_date)
+        new_assignment = Assignment(
+            title=title,
+            due_date=due_date
+        )
         db.session.add(new_assignment)
         db.session.commit()
-
         return redirect(url_for('dashboard'))
+
+    assignments = Assignment.query.all()
+    courses = Course.query.all()
+
+    # ---- Keep this for the graph ----
+    total = len(assignments)
+    today = datetime.today()
+    overdue = sum(1 for a in assignments if a.due_date < today)
+    upcoming = total - overdue
+    week_counts = [0]*7
+    for a in assignments:
+        weekday = a.due_date.weekday()
+        week_counts[weekday] += 1
+
+    return render_template(
+        'dashboard.html',
+        assignments=assignments,
+        courses=courses,
+        total=total,
+        overdue=overdue,
+        upcoming=upcoming,
+        today=today,
+        week_counts=week_counts   # <-- pass it to the template
+    )
 
     assignments = Assignment.query.order_by(Assignment.due_date).all()
     courses = Course.query.all()
