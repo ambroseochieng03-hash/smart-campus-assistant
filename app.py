@@ -2,8 +2,9 @@ from flask import Flask, render_template, request, redirect, url_for, session
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 from flask_mail import Mail, Message
-#import threading
+import logging
 
+# ---------------- SETUP ---------------- #
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///campus.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -18,6 +19,9 @@ app.config.update(
     MAIL_PASSWORD='zzkbjxbnnnmjfdzr'
 )
 mail = Mail(app)
+
+# ---------------- LOGGING ---------------- #
+logging.basicConfig(level=logging.INFO)
 
 # ---------------- DATABASE ---------------- #
 db = SQLAlchemy(app)
@@ -42,11 +46,18 @@ class Course(db.Model):
     end_time = db.Column(db.String(5), nullable=False)
 
 # ---------------- EMAIL FUNCTION ---------------- #
-
-def send_reminders_async(title, students):
-    """Send instant reminders in a separate thread to prevent blocking"""
-    for student in students:
-        send_reminder(title, student.email)
+def send_reminder(assignment_title, to_email):
+    try:
+        msg = Message(
+            'Assignment Reminder',
+            sender=app.config['MAIL_USERNAME'],
+            recipients=[to_email]
+        )
+        msg.body = f'Reminder: Your assignment "{assignment_title}" is due soon!'
+        mail.send(msg)
+        logging.info(f"[SUCCESS] Reminder sent to {to_email} for {assignment_title}")
+    except Exception as e:
+        logging.error(f"[ERROR] Failed to send reminder to {to_email}: {e}")
 
 # ---------------- ROUTES ---------------- #
 @app.route('/')
@@ -79,6 +90,10 @@ def register():
     db.session.add(new_user)
     db.session.commit()
     session['user'] = username
+
+    # Send instant email reminders for new assignment
+    # (currently no assignments yet, handled separately)
+
     return redirect(url_for('dashboard'))
 
 @app.route('/logout')
@@ -105,17 +120,11 @@ def dashboard():
         db.session.add(new_assignment)
         db.session.commit()
 
-        # ---- Send instant reminders asynchronously ----
-        #students = Student.query.all()
-        #threading.Thread(target=send_reminders_async, args=(title, students)).start()
-        # Get all student emails
+        # Send instant reminders synchronously
         students = Student.query.with_entities(Student.email).all()
         emails = [s[0] for s in students]
-
-        # Send emails synchronously (SAFE FOR PRODUCTION)
         for email in emails:
             send_reminder(title, email)
-        #threading.Thread(target=send_reminders_async, args=(title, emails)).start()
 
         return redirect(url_for('dashboard'))
 
@@ -127,19 +136,20 @@ def dashboard():
     overdue = sum(1 for a in assignments if a.due_date < today)
     upcoming = total - overdue
     week_counts = [0]*7
-
     for a in assignments:
         weekday = a.due_date.weekday()
         week_counts[weekday] += 1
 
-    return render_template('dashboard.html',
-                           assignments=assignments,
-                           courses=courses,
-                           total=total,
-                           overdue=overdue,
-                           upcoming=upcoming,
-                           today=today,
-                           week_counts=week_counts)
+    return render_template(
+        'dashboard.html',
+        assignments=assignments,
+        courses=courses,
+        total=total,
+        overdue=overdue,
+        upcoming=upcoming,
+        today=today,
+        week_counts=week_counts
+    )
 
 @app.route('/delete/<int:id>')
 def delete(id):
@@ -163,81 +173,24 @@ def add_course():
     db.session.commit()
     return redirect(url_for('dashboard'))
 
-# ---------------- RECURRING REMINDERS ---------------- #
-def check_assignments_and_send_reminders():
-    """Send reminders for assignments if 6 hours passed since last reminder"""
-    with app.app_context():
-        now = datetime.now()
-        assignments = Assignment.query.all()
-        students = Student.query.all()
-
-        for a in assignments:
-            if a.due_date <= now:
-                continue
-            if not a.last_reminder_sent:
-                for student in students:
-                    send_reminder(a.title, student.email)
-                a.last_reminder_sent = now
-                db.session.commit()
-                continue
-            hours_since_last = (now - a.last_reminder_sent).total_seconds() / 3600
-            if hours_since_last >= 6:
-                for student in students:
-                    send_reminder(a.title, student.email)
-                a.last_reminder_sent = now
-                db.session.commit()
-import logging
-logging.basicConfig(level=logging.INFO)
-
-def send_reminder(assignment_title, to_email):
-    try:
-        msg = Message(
-            'Assignment Reminder',
-            sender=app.config['MAIL_USERNAME'],
-            recipients=[to_email]
-        )
-        msg.body = f'Reminder: Your assignment "{assignment_title}" is due soon!'
-        mail.send(msg)
-        logging.info(f"[SUCCESS] Reminder sent to {to_email} for {assignment_title}")
-    except Exception as e:
-        logging.error(f"[ERROR] Failed to send reminder to {to_email}: {e}")               
-
-# ---------------- CLOUD CRON JOB ENDPOINT ---------------- #
+# ---------------- MANUAL REMINDERS ENDPOINT ---------------- #
 @app.route('/send_reminders')
 def send_reminders_endpoint():
-    #threading.Thread(target=check_assignments_and_send_reminders).start()
-    return "Reminders checked asynchronously!"
+    """Manual endpoint to send reminders to all students for all upcoming assignments"""
+    now = datetime.now()
+    assignments = Assignment.query.all()
+    students = Student.query.all()
 
-@app.route('/reset_db')
-def reset_db():
-    # WARNING: This deletes everything!
-    with app.app_context():
-        db.drop_all()
-        db.create_all()
-    return "Database reset!"
+    for a in assignments:
+        if a.due_date > now:
+            for student in students:
+                send_reminder(a.title, student.email)
+            a.last_reminder_sent = now
+            db.session.commit()
 
-@app.route('/clear_assignments')
-def clear_assignments():
-    """Deletes all assignments only."""
-    with app.app_context():
-        Assignment.query.delete()
-        db.session.commit()
-    return "✅ All assignments deleted!"
-
-# ---- Send instant reminders asynchronously ----
-#def send_reminders_async(title, students):
-    #with app.app_context():  # <--- ensure Flask app context is active
-        #for student in students:
-            #send_reminder(title, student.email)          
+    return "Reminders sent successfully!"
 
 # ---------------- RUN APP ---------------- #
-#if __name__ == '__main__':
-   # with app.app_context():
-        #db.create_all()  # Never drop DB, preserves registered users
-
-    #port = 5000
-    #app.run(host="0.0.0.0", port=port, debug=False)
-
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
