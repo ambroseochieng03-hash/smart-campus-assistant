@@ -46,6 +46,8 @@ class Course(db.Model):
     end_time = db.Column(db.String(5), nullable=False)
 
 # ---------------- EMAIL FUNCTION ---------------- #
+import smtplib
+
 def send_reminder(assignment_title, to_email):
     try:
         msg = Message(
@@ -54,10 +56,15 @@ def send_reminder(assignment_title, to_email):
             recipients=[to_email]
         )
         msg.body = f'Reminder: Your assignment "{assignment_title}" is due soon!'
+
         mail.send(msg)
-        logging.info(f"[SUCCESS] Reminder sent to {to_email} for {assignment_title}")
+        logging.info(f"[SUCCESS] Reminder sent to {to_email}")
+
+    except smtplib.SMTPException as e:
+        logging.error(f"[SMTP ERROR] {e}")
+
     except Exception as e:
-        logging.error(f"[ERROR] Failed to send reminder to {to_email}: {e}")
+        logging.error(f"[GENERAL ERROR] {e}")
 
 # ---------------- ROUTES ---------------- #
 @app.route('/')
