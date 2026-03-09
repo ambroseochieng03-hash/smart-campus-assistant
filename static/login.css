@@ -1,0 +1,190 @@
+/* login.css */
+
+/* Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Font & Body */
+body {
+    font-family: 'Roboto', sans-serif;
+    background: #eaf0f7; /* softer, friendly background */
+}
+
+/* Center the login wrapper */
+.login-wrapper {
+    display: flex;
+    max-width: 900px;
+    margin: 60px auto;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+}
+
+/* Left side (scenic photo) */
+.left-side {
+    flex: 1;
+    background: url('mountain-phot.jpeg') center/cover no-repeat;
+    position: relative;
+    min-width: 300px;
+    color: white;
+}
+
+/* Overlay text for left side */
+.left-side::after {
+    content: "";
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.25); /* subtle dark overlay */
+}
+
+.left-side .overlay-text {
+    position: absolute;
+    top: 20%;
+    left: 10%;
+    max-width: 250px;
+}
+
+.left-side h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 15px;
+}
+
+.left-side p {
+    font-size: 1rem;
+    line-height: 1.4;
+}
+
+/* Right side (login form) */
+.right-side {
+    flex: 1;
+    background: #f0f4f8 url('landmarks-bg.jpeg') bottom right no-repeat; /* softer background color */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 350px;
+    padding: 40px 20px; /* added padding to prevent squeeze */
+}
+
+/* Login card */
+.login-card {
+    width: 90%;       /* wider card */
+    max-width: 400px; /* increased max width */
+    background: white;
+    padding: 40px;    /* more internal padding */
+    border-radius: 12px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+    text-align: center;
+}
+
+.login-card h2 {
+    font-size: 1.8rem;
+    margin-bottom: 10px;
+}
+
+.login-card .subheading {
+    font-size: 1rem;
+    color: #555;
+    margin-bottom: 25px;
+}
+
+.login-card input {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 12px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    font-size: 1rem;
+}
+
+.primary-btn {
+    width: 100%;
+    padding: 12px;
+    background: #e74c3c;
+    color: white;
+    border: none;
+    font-weight: bold;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-bottom: 20px;
+}
+
+.primary-btn:hover {
+    background: #c0392b;
+}
+
+/* OR separator */
+.separator {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    margin: 20px 0;
+}
+
+.separator::before,
+.separator::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: #ccc;
+}
+
+.separator span {
+    margin: 0 10px;
+    color: #888;
+}
+
+/* Social buttons */
+.social-login button {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 6px;
+    border: none;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.google-btn { background: #db4437; color: white; }
+.facebook-btn { background: #4267B2; color: white; }
+.apple-btn { background: black; color: white; }
+
+.social-login button:hover {
+    opacity: 0.9;
+}
+
+/* Registration toggle */
+.register-prompt {
+    margin-top: 15px;
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+/* Responsive */
+@media(max-width: 800px){
+    .login-wrapper {
+        flex-direction: column;
+        max-width: 90%;
+        margin: 30px auto;
+    }
+    .left-side, .right-side {
+        min-width: 100%;
+        height: 200px;
+    }
+    .right-side {
+        padding: 20px 0;
+    }
+    .left-side .overlay-text {
+        top: 10%;
+        left: 5%;
+        max-width: 90%;
+    }
+    .login-card {
+        max-width: 90%;
+        padding: 30px;
+    }
+}

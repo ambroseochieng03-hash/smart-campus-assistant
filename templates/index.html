@@ -1,35 +1,84 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Smart Campus Assistant</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <meta charset="UTF-8">
+    <title>Smart Campus Assistant - Login</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='login.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
 
-<div class="container">
+<div class="login-wrapper">
 
-    <h1 class="title">Smart Campus Assistant</h1>
+    <!-- Left Scenic Section -->
+    <div class="left-side">
+        <div class="overlay-text">
 
-    <div class="card">
-        <h2>Login</h2>
-        <form action="/login" method="POST">
-            <input type="text" name="username" placeholder="Username" required>
-            <input type="password" name="password" placeholder="Password" required>
-            <button type="submit">Login</button>
-        </form>
+        </div>
     </div>
 
-    <div class="card">
-        <h2>Register</h2>
-        <form action="/register" method="POST">
-            <input type="text" name="username" placeholder="Username" required>
-            <input type="password" name="password" placeholder="Password" required>
-            <input type="email" name="email" placeholder="Email (for reminders)" required>
-            <button type="submit">Register</button>
-        </form>
+    <!-- Right Login Section -->
+    <div class="right-side">
+        <div class="login-card">
+            <h2>Welcome to Smart Campus Assistant</h2>
+            <p class="subheading" id="form-subheading">Login with Email</p>
+
+            <!-- Login Form -->
+            <form id="login-form" action="/login" method="POST">
+                <input type="email" name="username" placeholder="ritika@email.com" required>
+                <input type="password" name="password" placeholder="Password" required>
+                <button type="submit" class="primary-btn">LOGIN</button>
+            </form>
+
+            <!-- Registration Form (hidden by default) -->
+            <form id="register-form" action="/register" method="POST" style="display:none;">
+                <input type="text" name="username" placeholder="Username" required>
+                <input type="password" name="password" placeholder="Password" required>
+                <input type="email" name="email" placeholder="Email (for reminders)" required>
+                <button type="submit" class="primary-btn">REGISTER</button>
+            </form>
+
+            <!-- OR Separator -->
+            <div class="separator"><span>OR</span></div>
+
+            <!-- Social Login Buttons -->
+            <div class="social-login">
+                <button class="google-btn">Login with Google</button>
+                <button class="facebook-btn">Login with Facebook</button>
+                <button class="apple-btn">Login with Apple</button>
+            </div>
+
+            <!-- Toggle link -->
+            <p class="register-prompt">
+                <span id="toggle-form">Don’t have an account? Register Now</span>
+            </p>
+        </div>
     </div>
 
 </div>
+
+<script>
+    const toggleLink = document.getElementById('toggle-form');
+    const loginForm = document.getElementById('login-form');
+    const registerForm = document.getElementById('register-form');
+    const subheading = document.getElementById('form-subheading');
+
+    toggleLink.addEventListener('click', () => {
+        if (loginForm.style.display !== "none") {
+            loginForm.style.display = "none";
+            registerForm.style.display = "block";
+            subheading.textContent = "Create an Account";
+            toggleLink.textContent = "Already have an account? Login";
+        } else {
+            loginForm.style.display = "block";
+            registerForm.style.display = "none";
+            subheading.textContent = "Login with Email";
+            toggleLink.textContent = "Don’t have an account? Register Now";
+        }
+    });
+</script>
 
 </body>
 </html>

@@ -1,9 +1,11 @@
+/* General Styles */
 body {
     font-family: Arial, sans-serif;
-    background: #f4f6f9;
+    background: url('bg.png') center/cover no-repeat; /* updated to bg.png */
     margin: 0;
     padding: 0;
     transition: 0.3s;
+    background-attachment: fixed; /* optional: keeps background fixed */
 }
 
 .dark {
@@ -11,6 +13,7 @@ body {
     color: white;
 }
 
+/* Container */
 .container {
     width: 90%;
     max-width: 900px;
@@ -21,6 +24,7 @@ body {
     text-align: center;
 }
 
+/* Card */
 .card {
     background: white;
     padding: 20px;
@@ -33,6 +37,7 @@ body {
     background: #2c2c2c;
 }
 
+/* Inputs and buttons */
 input, select {
     padding: 10px;
     margin-bottom: 10px;
@@ -52,12 +57,14 @@ button:hover {
     background: #2980b9;
 }
 
+/* Top bar */
 .top-bar {
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
 
+/* Stats cards */
 .stats {
     display: flex;
     gap: 10px;
@@ -77,6 +84,7 @@ button:hover {
     background: #e74c3c;
 }
 
+/* Assignment list */
 .assignment {
     display: flex;
     justify-content: space-between;
@@ -91,4 +99,7 @@ button:hover {
 
 .delete-btn {
     background: #e74c3c;
+}
+h1 {
+    color: #2980b9;
 }
