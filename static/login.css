@@ -1,5 +1,3 @@
-/* login.css */
-
 /* Reset */
 * {
     margin: 0;
@@ -10,7 +8,7 @@
 /* Font & Body */
 body {
     font-family: 'Roboto', sans-serif;
-    background: #eaf0f7; /* softer, friendly background */
+    background: #d9edf7; /* new friendly background color */
 }
 
 /* Center the login wrapper */
@@ -32,7 +30,7 @@ body {
     color: white;
 }
 
-/* Overlay text for left side */
+/* Overlay dark layer for text visibility */
 .left-side::after {
     content: "";
     position: absolute;
@@ -62,20 +60,20 @@ body {
 /* Right side (login form) */
 .right-side {
     flex: 1;
-    background: #f0f4f8 url('landmarks-bg.jpeg') bottom right no-repeat; /* softer background color */
+    background: #f0f4f8 url('landmarks-bg.jpeg') bottom right no-repeat; /* softer background with landmarks */
     display: flex;
     align-items: center;
     justify-content: center;
     min-width: 350px;
-    padding: 40px 20px; /* added padding to prevent squeeze */
+    padding: 40px 20px;
 }
 
 /* Login card */
 .login-card {
-    width: 90%;       /* wider card */
-    max-width: 400px; /* increased max width */
+    width: 90%;
+    max-width: 400px;
     background: white;
-    padding: 40px;    /* more internal padding */
+    padding: 40px;
     border-radius: 12px;
     box-shadow: 0 8px 20px rgba(0,0,0,0.12);
     text-align: center;
@@ -187,4 +185,25 @@ body {
         max-width: 90%;
         padding: 30px;
     }
+}
+
+/* Make toggle links red */
+.register-link {
+    color: #e74c3c;      /* red color */
+    font-weight: bold;
+    text-decoration: none;
+}
+
+.register-link:hover {
+    text-decoration: underline;
+}
+
+.login-link {
+    color: #e74c3c;      /* red color */
+    font-weight: bold;
+    text-decoration: none;
+}
+
+.login-link:hover {
+    text-decoration: underline;
 }

@@ -15,7 +15,7 @@
     <!-- Left Scenic Section -->
     <div class="left-side">
         <div class="overlay-text">
-
+            <!-- optional: add text here if needed -->
         </div>
     </div>
 
@@ -52,7 +52,10 @@
 
             <!-- Toggle link -->
             <p class="register-prompt">
-                <span id="toggle-form">Don’t have an account? Register Now</span>
+                <span id="toggle-form">
+                    Don’t have an account? 
+                    <a href="#" class="register-link">Register Now</a>
+                </span>
             </p>
         </div>
     </div>
@@ -65,17 +68,18 @@
     const registerForm = document.getElementById('register-form');
     const subheading = document.getElementById('form-subheading');
 
-    toggleLink.addEventListener('click', () => {
+    toggleLink.addEventListener('click', (e) => {
+        e.preventDefault(); // prevent page jump
         if (loginForm.style.display !== "none") {
             loginForm.style.display = "none";
             registerForm.style.display = "block";
             subheading.textContent = "Create an Account";
-            toggleLink.textContent = "Already have an account? Login";
+            toggleLink.innerHTML = 'Already have an account? <a href="#" class="login-link">Login</a>';
         } else {
             loginForm.style.display = "block";
             registerForm.style.display = "none";
             subheading.textContent = "Login with Email";
-            toggleLink.textContent = "Don’t have an account? Register Now";
+            toggleLink.innerHTML = 'Don’t have an account? <a href="#" class="register-link">Register Now</a>';
         }
     });
 </script>
