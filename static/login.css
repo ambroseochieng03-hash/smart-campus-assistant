@@ -207,3 +207,15 @@ body {
 .login-link:hover {
     text-decoration: underline;
 }
+
+/* Red highlight for invalid inputs */
+.input-error {
+    border: 2px solid #e74c3c;
+}
+
+/* Error message */
+.error-message {
+    color: #e74c3c;
+    margin-bottom: 10px;
+    font-size: 0.9rem;
+}

@@ -68,7 +68,6 @@ def login():
     email = request.form['email']
     password = request.form['password']
 
-    # find all users with this email
     users = Student.query.filter_by(email=email).all()
     
     for user in users:
@@ -76,7 +75,8 @@ def login():
             session['user'] = email
             return redirect(url_for('dashboard'))
 
-    return "Invalid Credentials"
+    # Instead of plain text, render the login page with an error flag
+    return render_template('index.html', login_error=True, email=email)
 
 
 @app.route('/logout')

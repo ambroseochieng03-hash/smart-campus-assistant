@@ -26,9 +26,19 @@
             <p class="subheading" id="form-subheading">Login with Email</p>
 
             <!-- Login Form -->
+            <!-- LOGIN FORM -->
             <form id="login-form" action="/login" method="POST" style="display: block;">
-                <input type="email" name="email" placeholder="your@email.com" required>
-                <input type="password" name="password" placeholder="Password" required>
+                <input type="email" name="email" placeholder="your@email.com" required
+                    value="{{ email if email else '' }}"
+                    class="{% if login_error %}input-error{% endif %}">
+
+                <input type="password" name="password" placeholder="Password" required
+                    class="{% if login_error %}input-error{% endif %}">
+
+                {% if login_error %}
+                <p class="error-message">Invalid email or password</p>
+                {% endif %}
+
                 <button type="submit" class="primary-btn">LOGIN</button>
             </form>
 
